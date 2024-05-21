@@ -11,6 +11,7 @@ void test1() {
     for (int i = 0; i < 10; i++) {
         s.emplace(i);
     }
+    // std::cout<<"begin"<<std::endl;
     do {
         auto it2 = it--;
         if (it2 == s.end())

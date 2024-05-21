@@ -18,7 +18,7 @@ public:
         struct Node* father;
         struct Node* left;
         struct Node* right;
-        Node(){
+        Node() {
             father = left = right = nullptr;
             data = nullptr;
             height = 1;
@@ -26,7 +26,7 @@ public:
         }
         Node(int height, int size, T* data, struct Node* father, struct Node* left, struct Node* right)
             :height(height), size(size), data(data), father(father), left(left), right(right) {}
-        Node(const Node& other){
+        Node(const Node& other) {
             height = other.height;
             size = other.height;
             data = new T(*(other.data));
@@ -39,12 +39,12 @@ public:
             delete data;
             data = nullptr;
         }
-        Node& operator=(const Node& other){
-            if(&other == this) return (*this);
+        Node& operator=(const Node& other) {
+            if (&other == this) return (*this);
             height = other.height;
             size = other.size;
             data = new T(*(other.data));
-            father = left = right = nullptr;
+            left = right = nullptr;
             return (*this);
         }
     }AVLNode, * AVLTree;
@@ -82,8 +82,10 @@ public:
             }
             // delete now->data;
             delete now;
+            now = nullptr;
         }
-        std::cout << "end of avl" << std::endl;
+        root = nullptr;
+        // std::cout << "end of avl" << std::endl;
     }
     AVLNode* findMinNode(AVLNode* node) {
         while (node->left) node = node->left;
@@ -95,7 +97,7 @@ public:
     }
     void leftRotate(AVLTree* node) {
         AVLNode* X = *node, * XR = X->right;
-        if(XR->left) XR->left->father = X;
+        if (XR->left) XR->left->father = X;
         XR->father = X->father;
         X->father = XR;
         X->right = XR->left;
@@ -105,7 +107,7 @@ public:
     }
     void rightRotate(AVLTree* node) {
         AVLNode* X = *node, * XL = X->left;
-        if(XL->right) XL->right->father = X;
+        if (XL->right) XL->right->father = X;
         XL->father = X->father;
         X->father = XL;
         X->left = XL->right;
@@ -133,6 +135,7 @@ public:
         if (*((*node)->data) == data) return { node, false };
         else if (Compare()(data, *((*node)->data))) {//insert in left subtree
             auto ret = insert(&((*node)->left), data);
+            auto newnode = *ret.first;
             if (!ret.second) return { ret.first, false };
             int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
             if (lheight - rheight == 2) {
@@ -145,11 +148,12 @@ public:
                 }
             }
             refreshHeight(*node);
-            (*node)->left->father = *node;
-            return ret;
+            if((*node)->left) (*node)->left->father = *node;
+            return std::make_pair<AVLTree*, bool>(&newnode, true);
         }
         else {//insert in right subtree
             auto ret = insert(&((*node)->right), data);
+            auto newnode = *ret.first;
             if (!ret.second) return { ret.first, false };
             int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
             if (rheight - lheight == 2) {
@@ -162,8 +166,8 @@ public:
                 }
             }
             refreshHeight(*node);
-            (*node)->right->father = *node;
-            return ret;
+            if((*node)->right) (*node)->right->father = *node;
+            return std::make_pair<AVLTree*, bool>(&newnode, true);
         }
     }
     bool erase(AVLTree* node, const T& data) {
@@ -184,13 +188,13 @@ public:
                     }
                 }
                 refreshHeight(*node);
-                (*node)->left->father = *node;
-                (*node)->right->father = *node;
+                if((*node)->left) (*node)->left->father = *node;
+                if((*node)->right) (*node)->right->father = *node;
                 return true;
             }
             else if (!(*node)->left) {
                 auto now = *node;
-                if(now->right) now->right->father = now->father;
+                if (now->right) now->right->father = now->father;
                 *node = now->right;
                 // delete now->data;
                 delete now;
@@ -199,7 +203,7 @@ public:
             }
             else {
                 auto now = *node;
-                if(now->left) now->left->father = now->father;
+                if (now->left) now->left->father = now->father;
                 *node = now->left;
                 // delete now->data;
                 delete now;
@@ -222,7 +226,7 @@ public:
                 }
             }
             refreshHeight(*node);
-            if((*node)->left) (*node)->left->father = *node;
+            if ((*node)->left) (*node)->left->father = *node;
             return true;
         }
         else {//erase in right subtree
@@ -240,7 +244,7 @@ public:
                 }
             }
             refreshHeight(*node);
-            if((*node)->right) (*node)->right->father = *node;
+            if ((*node)->right) (*node)->right->father = *node;
             return true;
         }
     }
@@ -253,9 +257,9 @@ public:
             std::cout << "TREE IS EMPTY!" << std::endl;
             return;
         }
-        std::cout << *(node->data) << ' ' << (node->size)<<' ';
-        if(node->father) std::cout<<*(node->father->data)<<std::endl;
-        else std::cout<<"nullptr"<<std::endl;
+        std::cout << *(node->data) << ' ' << (node->size) << ' ';
+        if (node->father) std::cout << *(node->father->data) << std::endl;
+        else std::cout << "nullptr" << std::endl;
         if (node->left) traverse(node->left);
         if (node->right) traverse(node->right);
     }
@@ -287,17 +291,17 @@ public:
     }
     size_t findRange(AVLNode* node, const T& l, const T& r) const {
         int ret = 0;
-        if (inRange(*((*node)->data), l, r)) {
+        if (inRange(*(node->data), l, r)) {
             ++ret;
-            if(node->left) ret += findRange(node->left);
-            if(node->right) ret += findRange(node->right);
+            if (node->left and *(node->data) != l) ret += findRange(node->left, l, r);
+            if (node->right and *(node->data) != r) ret += findRange(node->right, l, r);
         }
         else {
-            if(Compare()(*(*node)->data, l)){
-                ret += findRange(node->right);
+            if (Compare()(*(node->data), l)) {
+                if(node->right) ret += findRange(node->right, l, r);
             }
-            else{
-                ret += findRange(node->left);
+            else {
+                if(node->left) ret += findRange(node->left, l, r);
             }
         }
         return ret;
@@ -310,15 +314,15 @@ public:
     class iterator;
 private:
     AVL<T>* table = nullptr;
-    inline void fixBeginEnd(){
-        beginIt = iterator(table->findMinNode(table->root));
-        endIt = iterator(table->findMaxNode(table->root));
+    inline void fixBeginEnd() {
+        beginIt = iterator(table->findMinNode(table->root), const_cast<ESet<T>*>(this));
+        endIt = iterator(table->findMaxNode(table->root), const_cast<ESet<T>*>(this));
     }
 public:
     iterator beginIt, endIt;//actually, this is a fake endIt(the one before end)
     ESet() {
         table = new AVL<T>();
-        beginIt = endIt = iterator(nullptr);
+        beginIt = endIt = iterator(nullptr, const_cast<ESet<T>*>(this));
     }
     ~ESet() {
         delete table;
@@ -327,9 +331,17 @@ public:
     class iterator {
     public:
         typename AVL<T>::AVLNode* node;
+        const ESet<T>* cont;
         iterator() {}
-        iterator(typename AVL<T>::AVLNode* node) : node(node) {}
-
+        iterator(typename AVL<T>::AVLNode* node, const ESet<T>* cont) : node(node), cont(cont) {}
+        iterator(const iterator& other){
+            node = other.node, cont = other.cont;
+        }
+        iterator& operator=(const iterator& other){
+            if(this == &other) return (*this);
+            node = other.node, cont = other.cont;
+            return (*this);
+        }
         T& operator*() const {
             if (!node) throw("iterator pointing to null");
             return *(node->data);
@@ -349,81 +361,203 @@ public:
             return node != rhs.node;
         }
         //it++
-        iterator operator++(int);
+        iterator operator++(int) {
+            if(!node) return (*this);
+            auto ret = (*this);
+            if ((*this) == cont->endIt) {
+                node = nullptr;
+                return ret;
+            }
+            auto now = node;
+            typename AVL<T>::AVLNode* last = nullptr;
+            while (true) {
+                if (now->right and now->right != last) {
+                    now = now->right;
+                    while (now->left) now = now->left;
+                    node = now;
+                    break;
+                }
+                else {
+                    if (now == now->father->left) {
+                        now = now->father;
+                        node = now;
+                        break;
+                    }
+                    else {
+                        last = now;
+                        now = now->father;
+                    }
+                }
+            }
+            return ret;
+        }
         //++it
-        iterator operator++();
+        iterator operator++() {
+            if(!node) return (*this);
+            if ((*this) == cont->endIt) {
+                node = nullptr;
+                return (*this);
+            }
+            auto now = node;
+            typename AVL<T>::AVLNode* last = nullptr;
+            while (true) {
+                if (now->right and now->right != last) {
+                    now = now->right;
+                    while (now->left) now = now->left;
+                    node = now;
+                    break;
+                }
+                else {
+                    if (now == now->father->left) {
+                        now = now->father;
+                        node = now;
+                        break;
+                    }
+                    else {
+                        last = now;
+                        now = now->father;
+                    }
+                }
+            }
+            return (*this);
+        }
         //it--
-        iterator operator--(int);
+        iterator operator--(int) {
+            if((*this) == cont->beginIt) return (*this);
+            auto ret = (*this);
+            if (node == nullptr) {
+                (*this) = cont->endIt;
+                return ret;
+            }
+            // if ((*this) == cont->beginIt) throw("begin--");
+            auto now = node;
+            typename AVL<T>::AVLNode* last = nullptr;
+            while (true) {
+                if (now->left and now->left != last) {
+                    now = now->left;
+                    while (now->right) now = now->right;
+                    node = now;
+                    break;
+                }
+                else {
+                    if (now == now->father->right) {
+                        now = now->father;
+                        node = now;
+                        break;
+                    }
+                    else {
+                        last = now;
+                        now = now->father;
+                    }
+                }
+            }
+            return ret;
+        }
         //--it
-        iterator operator--();
+        iterator operator--() {
+            if((*this) == cont->beginIt) return (*this);
+            if (node == nullptr) {
+                (*this) = cont->endIt;
+                return (*this);
+            }
+            // if ((*this) == cont->beginIt) throw("begin--");
+            auto now = node;
+            typename AVL<T>::AVLNode* last = nullptr;
+            while (true) {
+                if (now->left and now->left != last) {
+                    now = now->left;
+                    while (now->right) now = now->right;
+                    node = now;
+                    break;
+                }
+                else {
+                    if (now == now->father->right) {
+                        now = now->father;
+                        node = now;
+                        break;
+                    }
+                    else {
+                        last = now;
+                        now = now->father;
+                    }
+                }
+            }
+            return (*this);
+        }
     };
     std::pair<iterator, bool> emplace(T&& args) {
         auto ret = table->insert(&(table->root), std::forward<T>(args));
         fixBeginEnd();
-        return std::make_pair(iterator(*(ret.first)), ret.second);
+        return std::make_pair(iterator(*(ret.first), const_cast<ESet<T>*>(this)), ret.second);
     }
     template< class... Args >
     std::pair<iterator, bool> emplace(Args&&... args) {
         auto ret = table->insert(&(table->root), std::forward<T>(args)...);
         fixBeginEnd();
-        return std::make_pair(iterator(*(ret.first)), ret.second);
+        return std::make_pair(iterator(*(ret.first), const_cast<ESet<T>*>(this)), ret.second);
     }
     size_t erase(const T& key) {
         auto ret = table->erase(&(table->root), key);
-        if(size()) fixBeginEnd();
+        if (size()) fixBeginEnd();
         return ret;
     }
     iterator find(const T& key) const {
+        if(!table) return end();
         auto ret = table->find(table->root, key);
-        if (ret) return iterator(ret);
+        if (ret) return iterator(ret, const_cast<ESet<T>*>(this));
         else return end();
     }
-    ESet(const ESet& other){
+    ESet(const ESet& other) {
         table = new AVL<T>();
-        if(!other.size()) return;
+        if (!other.size()) return;
         std::queue<typename AVL<T>::AVLNode*> qthis, qother;
         table->root = new typename AVL<T>::AVLNode();
         // table->root = other->table->root;
         qother.push(other.table->root);
         qthis.push(table->root);
-        while(!qother.empty()){
+        while (!qother.empty()) {
             auto nowother = qother.front(), nowthis = qthis.front();
             qother.pop(), qthis.pop();
             *(nowthis) = *(nowother);
-            if(nowother->left){
+            if (nowother->left) {
                 nowthis->left = new typename AVL<T>::AVLNode();
+                nowthis->left->father = nowthis;
                 qother.push(nowother->left);
                 qthis.push(nowthis->left);
             }
-            if(nowother->right){
+            if (nowother->right) {
                 nowthis->right = new typename AVL<T>::AVLNode();
+                nowthis->right->father = nowthis;
                 qother.push(nowother->right);
                 qthis.push(nowthis->right);
             }
         }
         fixBeginEnd();
     }
-    ESet& operator=(const ESet& other){
-        if(&other == this) return (*this);
+    ESet& operator=(const ESet& other) {
+        if (&other == this) return (*this);
         delete table;
+        table = nullptr;
         table = new AVL<T>();
-        if(!other.size()) return (*this);
+        if (!other.size()) return (*this);
         std::queue<typename AVL<T>::AVLNode*> qthis, qother;
         table->root = new typename AVL<T>::AVLNode();
         // table->root = other->table->root;
         qother.push(other.table->root);
         qthis.push(table->root);
-        while(!qother.empty()){
+        while (!qother.empty()) {
             auto nowother = qother.front(), nowthis = qthis.front();
             qother.pop(), qthis.pop();
             *(nowthis) = *(nowother);
-            if(nowother->left){
+            if (nowother->left) {
                 nowthis->left = new typename AVL<T>::AVLNode();
+                nowthis->left->father = nowthis;
                 qother.push(nowother->left);
                 qthis.push(nowthis->left);
             }
-            if(nowother->right){
+            if (nowother->right) {
                 nowthis->right = new typename AVL<T>::AVLNode();
+                nowthis->right->father = nowthis;
                 qother.push(nowother->right);
                 qthis.push(nowthis->right);
             }
@@ -431,39 +565,41 @@ public:
         fixBeginEnd();
         return (*this);
     }
-    ESet(ESet&& other){
+    ESet(ESet&& other) {
         table = other.table;
         other.table = nullptr;
         fixBeginEnd();
     }
-    ESet& operator=(ESet&& other) noexcept{
+    ESet& operator=(ESet&& other) noexcept {
         delete table;
         table = other.table;
         other.table = nullptr;
         fixBeginEnd();
+        return (*this);
     }
 
     size_t range(const T& l, const T& r) const {
         if (Compare()(r, l)) return 0;
-        return findRange(table->root, l, r);
+        return table->findRange(table->root, l, r);
     }
     size_t size() const noexcept {
         return table->getSize(table->root);
     }
     iterator lower_bound(const T& key) const {
-        return iterator(table->findLowerBound(table->root, key));
+        return iterator(table->findLowerBound(table->root, key), const_cast<ESet<T>*>(this));
     }
     iterator upper_bound(const T& key) const {
-        return iterator(table->findUpperBound(table->root, key));
+        return iterator(table->findUpperBound(table->root, key), const_cast<ESet<T>*>(this));
     }
     iterator begin() const noexcept {
         return beginIt;
     }
     iterator end() const noexcept {
-        return iterator(nullptr);
+        return iterator(nullptr, const_cast<ESet<T>*>(this));
     }
-    void traverse(){
-        table->traverse(table->root);
+    void traverse() {
+        if(!table) std::cout<<"Tree is empty!"<<std::endl;
+        else table->traverse(table->root);
     }
 };
 

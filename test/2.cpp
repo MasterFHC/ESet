@@ -11,13 +11,16 @@ int main() {
 //    clock_t start, end;
 //    start = clock();
     ESet<long long> s[25];
-    ESet<long long>::iterator it;
+    ESet<long long>::iterator it(nullptr, nullptr);
     int op, lst=0, valid = 0,cnt=1;
     while (scanf("%d", &op) != EOF) {
         long long a, b, c;
 //        if(cnt==213){
 //            printf("!!!");
 //        }
+        // std::cout<<"before op: ";
+        // if(it.get()) std::cout<<"it="<<*it<<std::endl;
+        // else std::cout<<"it = nullptr"<<std::endl;
         switch (op) {
             case 0: {
                 scanf("%lld%lld", &a, &b);
@@ -30,6 +33,8 @@ int main() {
             }
             case 1:
                 scanf("%lld%lld", &a, &b);
+                // if(a == 0 and b == 1041) 
+                    // std::cout<<"ab="<<a<<' '<<b<<std::endl;
                 if (valid && *it == b)valid = 0;
                 s[a].erase(b);
                 break;
@@ -76,6 +81,9 @@ int main() {
                 cnt++;
                 break;
         }
+        // std::cout<<"after op=("<<a<<','<<b<<','<<c<<") ";
+        // if(it.get()) std::cout<<"it="<<*it<<std::endl;
+        // else std::cout<<"it = nullptr"<<std::endl;
     }
 //    end = clock(); //程序结束用时
 //    double endtime = (double) (end - start) / CLOCKS_PER_SEC;
