@@ -141,14 +141,10 @@ public:
             *node = new AVLNode(1, 1, new T(data), nullptr, nullptr, nullptr);
             return std::pair<AVLNode*, bool>(*node, true);
         }
-        if((*node)->left) (*node)->left->father = (*node);
-        if((*node)->right) (*node)->right->father = (*node);
-        auto nownode = (*node);
         if (isEqual(*((*node)->data), data)) return std::pair<AVLNode*, bool>(*node, false);
         else if (Compare()(data, *((*node)->data))) {//insert in left subtree
             auto ret = insert(&((*node)->left), data);
-            // auto newnode = ret.first;
-            *node = nownode;
+            auto newnode = ret.first;
             if (!ret.second) return std::pair<AVLNode*, bool>(ret.first, false);
             int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
             if (lheight - rheight == 2) {
@@ -162,12 +158,11 @@ public:
             }
             refreshHeight(*node);
             if((*node)->left) (*node)->left->father = *node;
-            return std::pair<AVLNode*, bool>(ret.first, true);
+            return std::pair<AVLNode*, bool>(newnode, true);
         }
         else {//insert in right subtree
             auto ret = insert(&((*node)->right), data);
-            // auto newnode = ret.first;
-            *node = nownode;
+            auto newnode = ret.first;
             if (!ret.second) return std::pair<AVLNode*, bool>(ret.first, false);
             int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
             if (rheight - lheight == 2) {
@@ -181,21 +176,18 @@ public:
             }
             refreshHeight(*node);
             if((*node)->right) (*node)->right->father = *node;
-            return std::pair<AVLNode*, bool>(ret.first, true);
+            return std::pair<AVLNode*, bool>(newnode, true);
         }
     }
     bool erase(AVLTree* node, const T& data) {
-        if (!(*node)) return false;
-        if((*node)->left) (*node)->left->father = (*node);
-        if((*node)->right) (*node)->right->father = (*node);
         AVLNode* nownode = *node;
+        if (!(*node)) return false;
         if (isEqual(*((*node)->data), data)) {
             if (nownode->left and nownode->right) {
                 auto swapNode = findMinNode(nownode->right);
                 if(!nownode->father) root = swapNode;
                 if(nownode->father and swapNode->father){
                     AVLTree *nodeson, *swapson;
-                    // if(nownode == swapNode->father)
                     if(nownode == nownode->father->left) nodeson = &(nownode->father->left);
                     else nodeson = &(nownode->father->right);
                     if(swapNode == swapNode->father->left) swapson = &(swapNode->father->left);
@@ -216,23 +208,23 @@ public:
                 std::swap(nownode->right, swapNode->right);
                 std::swap(nownode->father, swapNode->father);
                 erase(&(swapNode->right), *(nownode->data));
-                *node = swapNode;
-                int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
+                nownode = swapNode;
+                int lheight = getHeight(nownode->left), rheight = getHeight(nownode->right);
                 if (lheight - rheight == 2) {
-                    if (getHeight((*node)->left->left) >= getHeight((*node)->left->right)) {//LL
+                    if (getHeight(nownode->left->left) >= getHeight(nownode->left->right)) {//LL
                         rightRotate(node);
                     }
                     else {//LR
-                        leftRotate(&((*node)->left));
+                        leftRotate(&(nownode->left));
                         rightRotate(node);
                     }
                 }
-                refreshHeight((*node));
-                if((*node)->left) (*node)->left->father = (*node);
-                if((*node)->right) (*node)->right->father = (*node);
+                refreshHeight(nownode);
+                if(nownode->left) nownode->left->father = nownode;
+                if(nownode->right) nownode->right->father = nownode;
                 return true;
             }
-            else if (!(*node)->left) {
+            else if (!nownode->left) {
                 auto now = *node;
                 if (now->right) now->right->father = now->father;
                 *node = now->right;

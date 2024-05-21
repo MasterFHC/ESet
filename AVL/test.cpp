@@ -6,16 +6,33 @@ using namespace std;
 int main(){
     // freopen("input.txt","r",stdin);
     ESet<int> test;
-    test.emplace(1288);
-    test.emplace(1283);
-    test.emplace(1321);
-    test.emplace(1292);
-    auto ret = test.emplace(1303);
-    auto it = ret.first;
-    bool tof = ret.second;
-    if(it.get()) cout<<*it<<endl;
-    else cout<<"empty!"<<endl;
-    cout<<"tof="<<tof<<endl;
+    // test.emplace(1288);
+    for(int i=1;i<=10;i++){
+        test.emplace(i);
+    }
+    auto it = --(test.end());
+    --it;
+    test.erase(8);
+    cout<<*it<<endl;
+    // auto it = test.begin();
+    // ++it;++it;++it;++it;++it;
+    // for(int i=1;i<=;i++){
+    //     test.erase(i);
+    //     if(*it != 6) cout<<"fuck"<<endl;
+    //     else cout<<"(*it, *begin)=="<<*it<<" "<<*(test.begin())<<endl;
+    // }
+    // test.emplace(1);
+    // test.emplace(2);
+    // test.traverse();
+    // cin.get();
+    // test.upper_bound(24);
+    // for(int i=0;i<=22;i++){
+    //     for(int j=0;j<=22;j++){
+    //         cout<<test.range(i, j)<<' ';
+    //     }
+    //     cout<<endl;
+    // }
+
     // int x, y, z;
     // for(int i=1;i<=63;i++){
     //     cin>>x>>y>>z;

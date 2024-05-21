@@ -18,12 +18,14 @@ int main() {
 //        if(cnt==213){
 //            printf("!!!");
 //        }
+        std::cin.get();
         switch (op) {
             case 0: {
                 scanf("%lld%lld", &a, &b);
                 auto p=s[a].emplace(b);
                 if(p.second) {
                     it = p.first;
+                    // std::cout<<"now, data="<<*it<<std::endl;
                     valid = 1;
                 }
                 break;
