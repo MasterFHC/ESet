@@ -3,8 +3,8 @@
 #include <set>
 #include "src.hpp"
 using namespace std;
-const int n = 32;
-int T = 1000;
+const int n = 256;
+int T = 10;
 int main(){
     freopen("output.txt","w",stdout);
     srand(time(NULL));
@@ -15,9 +15,8 @@ int main(){
         std::set<int> exist;
         for(int i=1;i<=n;i++){
             toerase.push_back(i);
-            test.emplace(i);
+            it[i] = test.emplace(i).first;
             exist.emplace(i);
-            it[i] = --test.end();
         }
         random_shuffle(toerase.begin(), toerase.end());
         for(auto ele:toerase) cout<<ele<<" ";
@@ -27,6 +26,7 @@ int main(){
             bool beginChanged = false;
             int deleted = *(test.table->root->data);
             if(deleted == *(test.begin())) beginChanged = true;
+            // test.emplace(rand()%n);
             test.erase(deleted);
             exist.erase(deleted);
             // cout<<*it<<endl;
@@ -38,10 +38,15 @@ int main(){
             }
             for(int i=1;i<=n;i++){
                 if(exist.find(i) != exist.end()){
+                    ++it[i];
+                    it[i]--;
+                    it[i]++;
+                    --it[i];    
                     if(*(it[i]) != i){
                         cout<<endl<<"wrong it!"<<endl;
                         return 0;
                     }
+
                 }
             }
             if(test.size()) beginValue = *(test.begin());

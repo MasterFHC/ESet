@@ -141,14 +141,15 @@ public:
             *node = new AVLNode(1, 1, new T(data), nullptr, nullptr, nullptr);
             return std::pair<AVLNode*, bool>(*node, true);
         }
-        if((*node)->left) (*node)->left->father = (*node);
-        if((*node)->right) (*node)->right->father = (*node);
-        auto nownode = (*node);
+        // if((*node)->left) (*node)->left->father = (*node);
+        // if((*node)->right) (*node)->right->father = (*node);
+        // auto nownode = (*node);
         if (isEqual(*((*node)->data), data)) return std::pair<AVLNode*, bool>(*node, false);
         else if (Compare()(data, *((*node)->data))) {//insert in left subtree
             auto ret = insert(&((*node)->left), data);
             // auto newnode = ret.first;
-            *node = nownode;
+            if((*node)->left) (*node)->left->father = *node;
+            // *node = nownode;
             if (!ret.second) return std::pair<AVLNode*, bool>(ret.first, false);
             int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
             if (lheight - rheight == 2) {
@@ -161,13 +162,13 @@ public:
                 }
             }
             refreshHeight(*node);
-            if((*node)->left) (*node)->left->father = *node;
             return std::pair<AVLNode*, bool>(ret.first, true);
         }
         else {//insert in right subtree
             auto ret = insert(&((*node)->right), data);
+            if((*node)->right) (*node)->right->father = *node;
             // auto newnode = ret.first;
-            *node = nownode;
+            // *node = nownode;
             if (!ret.second) return std::pair<AVLNode*, bool>(ret.first, false);
             int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
             if (rheight - lheight == 2) {
@@ -180,14 +181,13 @@ public:
                 }
             }
             refreshHeight(*node);
-            if((*node)->right) (*node)->right->father = *node;
             return std::pair<AVLNode*, bool>(ret.first, true);
         }
     }
     bool erase(AVLTree* node, const T& data) {
         if (!(*node)) return false;
-        if((*node)->left) (*node)->left->father = (*node);
-        if((*node)->right) (*node)->right->father = (*node);
+        // if((*node)->left) (*node)->left->father = (*node);
+        // if((*node)->right) (*node)->right->father = (*node);
         AVLNode* nownode = *node;
         if (isEqual(*((*node)->data), data)) {
             if (nownode->left and nownode->right) {
@@ -215,10 +215,12 @@ public:
                 std::swap(nownode->left, swapNode->left);
                 std::swap(nownode->right, swapNode->right);
                 std::swap(nownode->father, swapNode->father);
-                erase(&(swapNode->right), *(nownode->data));
+                if((*node)->left) (*node)->left->father = (*node);
+                if((*node)->right) (*node)->right->father = (*node);
                 *node = swapNode;
-                if ((*node)->left) (*node)->left->father = *node;
-                if ((*node)->right) (*node)->right->father = *node;
+                if((*node)->left) (*node)->left->father = (*node);
+                if((*node)->right) (*node)->right->father = (*node);
+                erase(&(swapNode->right), *(nownode->data));
                 int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
                 if (lheight - rheight == 2) {
                     if (getHeight((*node)->left->left) >= getHeight((*node)->left->right)) {//LL
@@ -230,8 +232,6 @@ public:
                     }
                 }
                 refreshHeight((*node));
-                if((*node)->left) (*node)->left->father = (*node);
-                if((*node)->right) (*node)->right->father = (*node);
                 return true;
             }
             else if (!(*node)->left) {
@@ -257,6 +257,7 @@ public:
             if (!erase(&((*node)->left), data)) {
                 return false;
             }
+            // if ((*node)->left) (*node)->left->father = *node;
             int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
             if (rheight - lheight == 2) {
                 if (getHeight((*node)->right->right) >= getHeight((*node)->right->left)) {//RR
@@ -268,13 +269,13 @@ public:
                 }
             }
             refreshHeight(*node);
-            if ((*node)->left) (*node)->left->father = *node;
             return true;
         }
         else {//erase in right subtree
             if (!erase(&((*node)->right), data)) {
                 return false;
             }
+            // if ((*node)->right) (*node)->right->father = *node;
             int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
             if (lheight - rheight == 2) {
                 if (getHeight((*node)->left->left) >= getHeight((*node)->left->right)) {//LL
@@ -286,7 +287,6 @@ public:
                 }
             }
             refreshHeight(*node);
-            if ((*node)->right) (*node)->right->father = *node;
             return true;
         }
     }
@@ -360,8 +360,14 @@ public:
     AVL<T, Compare>* table = nullptr;
 private:
     inline void fixBeginEnd() {
-        beginIt = iterator(table->findMinNode(table->root), this);
-        endIt = iterator(table->findMaxNode(table->root), this);
+        if(!size()){
+            beginIt.node = nullptr;
+            endIt.node = nullptr;
+        }
+        else{
+            beginIt = iterator(table->findMinNode(table->root), this);
+            endIt = iterator(table->findMaxNode(table->root), this);
+        }
     }
 public:
     iterator beginIt = end(), endIt = end();//actually, this is a fake endIt(the one before end)
@@ -471,7 +477,8 @@ public:
         }
         //it--
         iterator operator--(int) {
-            if(node == cont->beginIt.node) return (*this);
+            if(node == cont->beginIt.node or !cont->size()) return (*this);
+            // if(node == cont->beginIt.node) return (*this);
             auto ret = (*this);
             if (node == nullptr) {
                 (*this) = cont->endIt;
@@ -503,7 +510,8 @@ public:
         }
         //--it
         iterator operator--() {
-            if(node == cont->beginIt.node){
+            if(node == cont->beginIt.node or !cont->size()){
+            // if(node == cont->beginIt.node){
                 return (*this);
             }
             if (node == nullptr) {
@@ -537,13 +545,13 @@ public:
     };
     std::pair<iterator, bool> emplace(T&& args) {
         auto ret = table->insert(&(table->root), std::forward<T>(args));
-        if(size()) fixBeginEnd();
+        fixBeginEnd();
         return std::pair<iterator, bool>(iterator(ret.first, this), ret.second);
     }
     template< class... Args >
     std::pair<iterator, bool> emplace(Args&&... args) {
         auto ret = table->insert(&(table->root), std::forward<T>(args)...);
-        if(size()) fixBeginEnd();
+        fixBeginEnd();
         return std::pair<iterator, bool>(iterator(ret.first, this), ret.second);
     }
     size_t erase(const T& key) {
@@ -582,7 +590,7 @@ public:
                 qthis.push(nowthis->right);
             }
         }
-        if(size()) fixBeginEnd();
+        fixBeginEnd();
     }
     ESet& operator=(const ESet& other) {
         if (&other == this) return (*this);
@@ -612,7 +620,7 @@ public:
                 qthis.push(nowthis->right);
             }
         }
-        if(size()) fixBeginEnd();
+        fixBeginEnd();
         return (*this);
     }
     ESet(ESet&& other) {
@@ -621,7 +629,7 @@ public:
         other.table = nullptr;
         // beginIt = other.beginIt;
         // endIt = other.endIt;
-        if(size()) fixBeginEnd();
+        fixBeginEnd();
     }
     ESet& operator=(ESet&& other) noexcept {
         if(&other == this) return (*this);
@@ -632,7 +640,7 @@ public:
         // beginIt = other.beginIt;
         // endIt = other.endIt;
         // if(table.size)
-        if(size()) fixBeginEnd();
+        fixBeginEnd();
         return (*this);
     }
 
