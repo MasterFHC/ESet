@@ -98,12 +98,6 @@ public:
         while (node->right) node = node->right;
         return node;
     }
-    void checkFather(AVLNode* node){
-        if(node->father){
-            if(node == node->father->left) node->father->left = node;
-            else node->father->right = node;
-        }
-    }
     void leftRotate(AVLTree* node) {
         AVLNode* X = *node, * XR = X->right;
         if (XR->left) XR->left->father = X;
@@ -158,6 +152,9 @@ public:
             }
             refreshHeight(*node);
             if((*node)->left) (*node)->left->father = *node;
+            // std::cout<<"newnode="<<newnode<<std::endl;
+            // std::cout<<"data="<<newnode->data<<std::endl;
+            // std::cout<<"*data="<<*(newnode->data)<<std::endl;
             return std::pair<AVLNode*, bool>(newnode, true);
         }
         else {//insert in right subtree
@@ -176,55 +173,37 @@ public:
             }
             refreshHeight(*node);
             if((*node)->right) (*node)->right->father = *node;
+            // std::cout<<"newnode="<<newnode<<std::endl;
+            // std::cout<<"data="<<newnode->data<<std::endl;
+            // std::cout<<"*data="<<*(newnode->data)<<std::endl;
             return std::pair<AVLNode*, bool>(newnode, true);
         }
+        // std::cout<<"*return data="<<*((*(returnvalue.first))->data)<<std::endl;
+        // return returnvalue;
     }
     bool erase(AVLTree* node, const T& data) {
-        AVLNode* nownode = *node;
         if (!(*node)) return false;
         if (isEqual(*((*node)->data), data)) {
-            if (nownode->left and nownode->right) {
-                auto swapNode = findMinNode(nownode->right);
-                if(!nownode->father) root = swapNode;
-                if(nownode->father and swapNode->father){
-                    AVLTree *nodeson, *swapson;
-                    if(nownode == nownode->father->left) nodeson = &(nownode->father->left);
-                    else nodeson = &(nownode->father->right);
-                    if(swapNode == swapNode->father->left) swapson = &(swapNode->father->left);
-                    else swapson = &(swapNode->father->right);
-                    std::swap(*nodeson, *swapson);
-                }
-                else if(nownode->father){
-                    if(nownode == nownode->father->left) nownode->father->left = swapNode;
-                    else nownode->father->right = swapNode;
-                }
-                else{
-                    if(swapNode == swapNode->father->left) swapNode->father->left = nownode;
-                    else swapNode->father->right = nownode;
-                }
-                std::swap(nownode->height, swapNode->height);
-                std::swap(nownode->size, swapNode->size);
-                std::swap(nownode->left, swapNode->left);
-                std::swap(nownode->right, swapNode->right);
-                std::swap(nownode->father, swapNode->father);
-                erase(&(swapNode->right), *(nownode->data));
-                nownode = swapNode;
-                int lheight = getHeight(nownode->left), rheight = getHeight(nownode->right);
+            if ((*node)->left and (*node)->right) {
+                auto key = *(findMinNode((*node)->right))->data;
+                *((*node)->data) = key;
+                erase(&((*node)->right), key);
+                int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
                 if (lheight - rheight == 2) {
-                    if (getHeight(nownode->left->left) >= getHeight(nownode->left->right)) {//LL
+                    if (getHeight((*node)->left->left) >= getHeight((*node)->left->right)) {//LL
                         rightRotate(node);
                     }
                     else {//LR
-                        leftRotate(&(nownode->left));
+                        leftRotate(&((*node)->left));
                         rightRotate(node);
                     }
                 }
-                refreshHeight(nownode);
-                if(nownode->left) nownode->left->father = nownode;
-                if(nownode->right) nownode->right->father = nownode;
+                refreshHeight(*node);
+                if((*node)->left) (*node)->left->father = *node;
+                if((*node)->right) (*node)->right->father = *node;
                 return true;
             }
-            else if (!nownode->left) {
+            else if (!(*node)->left) {
                 auto now = *node;
                 if (now->right) now->right->father = now->father;
                 *node = now->right;
@@ -347,8 +326,8 @@ template<class T, class Compare = std::less<T>>
 class ESet {
 public:
     class iterator;
-private:
     AVL<T, Compare>* table = nullptr;
+private:
     inline void fixBeginEnd() {
         beginIt = iterator(table->findMinNode(table->root), this);
         endIt = iterator(table->findMaxNode(table->root), this);
@@ -384,7 +363,7 @@ public:
             if (!node) throw("iterator pointing to null");
             return *(node->data);
         }
-        const T* operator->() const noexcept {
+        T* operator->() const noexcept {
             if (!node) throw("iterator pointing to null");
             return node->data;
         }
@@ -393,10 +372,10 @@ public:
             return node->data;
         }
         bool operator==(const iterator& rhs) const {
-            return node == rhs.node and cont == rhs.cont;
+            return node == rhs.node;
         }
         bool operator!=(const iterator& rhs) const {
-            return node != rhs.node or cont != rhs.cont;
+            return node != rhs.node;
         }
         //it++
         iterator operator++(int) {
@@ -493,7 +472,12 @@ public:
         }
         //--it
         iterator operator--() {
+            // std::cout<<"--it"<<std::endl;
+            // std::cout<<"node="<<node<<std::endl;
+            // std::cout<<"data="<<*(node->data)<<std::endl;
+            // std::cout<<"beginIt="<<*(cont->beginIt.node->data)<<std::endl;
             if(node == cont->beginIt.node){
+                // std::cout<<"same as begin!"<<std::endl;
                 return (*this);
             }
             if (node == nullptr) {

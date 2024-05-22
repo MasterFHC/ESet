@@ -217,6 +217,8 @@ public:
                 std::swap(nownode->father, swapNode->father);
                 erase(&(swapNode->right), *(nownode->data));
                 *node = swapNode;
+                if ((*node)->left) (*node)->left->father = *node;
+                if ((*node)->right) (*node)->right->father = *node;
                 int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
                 if (lheight - rheight == 2) {
                     if (getHeight((*node)->left->left) >= getHeight((*node)->left->right)) {//LL
@@ -355,8 +357,8 @@ template<class T, class Compare = std::less<T>>
 class ESet {
 public:
     class iterator;
-private:
     AVL<T, Compare>* table = nullptr;
+private:
     inline void fixBeginEnd() {
         beginIt = iterator(table->findMinNode(table->root), this);
         endIt = iterator(table->findMaxNode(table->root), this);
@@ -535,13 +537,13 @@ public:
     };
     std::pair<iterator, bool> emplace(T&& args) {
         auto ret = table->insert(&(table->root), std::forward<T>(args));
-        fixBeginEnd();
+        if(size()) fixBeginEnd();
         return std::pair<iterator, bool>(iterator(ret.first, this), ret.second);
     }
     template< class... Args >
     std::pair<iterator, bool> emplace(Args&&... args) {
         auto ret = table->insert(&(table->root), std::forward<T>(args)...);
-        fixBeginEnd();
+        if(size()) fixBeginEnd();
         return std::pair<iterator, bool>(iterator(ret.first, this), ret.second);
     }
     size_t erase(const T& key) {
@@ -580,7 +582,7 @@ public:
                 qthis.push(nowthis->right);
             }
         }
-        fixBeginEnd();
+        if(size()) fixBeginEnd();
     }
     ESet& operator=(const ESet& other) {
         if (&other == this) return (*this);
@@ -610,37 +612,49 @@ public:
                 qthis.push(nowthis->right);
             }
         }
-        fixBeginEnd();
+        if(size()) fixBeginEnd();
         return (*this);
     }
     ESet(ESet&& other) {
         table = other.table;
+        // delete &other;
         other.table = nullptr;
-        fixBeginEnd();
+        // beginIt = other.beginIt;
+        // endIt = other.endIt;
+        if(size()) fixBeginEnd();
     }
     ESet& operator=(ESet&& other) noexcept {
+        if(&other == this) return (*this);
         delete table;
         table = other.table;
+        // delete &other;
         other.table = nullptr;
-        fixBeginEnd();
+        // beginIt = other.beginIt;
+        // endIt = other.endIt;
+        // if(table.size)
+        if(size()) fixBeginEnd();
         return (*this);
     }
 
     size_t range(const T& l, const T& r) const {
         if (Compare()(r, l)) return 0;
-        return table->findRange(table->root, l, r);
+        if(size()) return table->findRange(table->root, l, r);
+        else return 0;
     }
     size_t size() const noexcept {
         return table->getSize(table->root);
     }
     iterator lower_bound(const T& key) const {
-        return iterator(table->findLowerBound(table->root, key), this);
+        if(size()) return iterator(table->findLowerBound(table->root, key), this);
+        else return end();
     }
     iterator upper_bound(const T& key) const {
-        return iterator(table->findUpperBound(table->root, key), this);
+        if(size()) return iterator(table->findUpperBound(table->root, key), this);
+        else return end();
     }
     iterator begin() const noexcept {
-        return beginIt;
+        if(size()) return beginIt;
+        else return end();
     }
     iterator end() const noexcept {
         return iterator(nullptr, this);
