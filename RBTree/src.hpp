@@ -4,31 +4,97 @@
 #include <iostream>
 
 template<class T, class Compare = std::less<T>>
-class RBTree{
+class RBTree {
 public:
-    struct RBNode{
+    struct RBNode {
         int size;
+        bool color;//R = 1, B = 0
         T* data;
         struct RBNode* father;
         struct RBNode* left;
         struct RBNode* right;
-        RBNode(){
+        RBNode() {
             father = left = right = nullptr;
             data = nullptr;
             size = 1;
         }
-        ~RBNode(){
+        ~RBNode() {
             father = left = right = nullptr;
             delete data;
             data = nullptr;
         }
     };
-    inline int getSize(RBNode* node){
-        if(!node) return 0;
+    RBNode* root;   //The root node
+    RBNode* hot;    //The node that is being looked at
+    inline int getSize(RBNode* node) {
+        if (!node) return 0;
         return node->size;
     }
     bool isEqual(const T& a, const T& b) const {
         return !Compare()(a, b) and !Compare()(b, a);
+    }
+
+
+
+    /*
+    **function for checking correctness and utilities
+    */
+    void traverse(RBNode* node) {
+        if (!node) {
+            std::cout << "TREE IS EMPTY!" << std::endl;
+            return;
+        }
+        std::cout << *(node->data) << ' ' << (node->size) << ' ' << (node->color) << ' ';
+        if (node->father) std::cout << *(node->father->data) << std::endl;
+        else std::cout << "nullptr" << std::endl;
+        if (node->left) traverse(node->left);
+        if (node->right) traverse(node->right);
+    }
+    RBNode* findLowerBound(RBNode* node, const T& key) {//key <= data
+        bool isValid = false;
+        AVLNode* foundNode = nullptr;
+        if (!Compare()(*(node->data), key)) isValid = true;
+        if (node->left and Compare()(key, *(node->data))) foundNode = findLowerBound(node->left, key);
+        else if (node->right and !isValid) foundNode = findLowerBound(node->right, key);
+        if (isValid) {
+            if (!foundNode) return node;
+            else if (Compare()(*(foundNode->data), *(node->data))) return foundNode;
+            else return node;
+        }
+        else return foundNode;
+    }
+    RBNode* findUpperBound(RBNode* node, const T& key) {//key < data
+        bool isValid = false;
+        AVLNode* foundNode = nullptr;
+        if (Compare()(key, *(node->data))) isValid = true;
+        if (node->left and Compare()(key, *(node->data))) foundNode = findUpperBound(node->left, key);
+        else if (node->right and !isValid) foundNode = findUpperBound(node->right, key);
+        if (isValid) {
+            if (!foundNode) return node;
+            else if (Compare()(*(foundNode->data), *(node->data))) return foundNode;
+            else return node;
+        }
+        else return foundNode;
+    }
+    inline bool inRange(const T& data, const T& l, const T& r) const {
+        return !Compare()(data, l) and !Compare()(r, data);
+    }
+    size_t findRange(RBNode* node, const T& l, const T& r) const {
+        int ret = 0;
+        if (inRange(*(node->data), l, r)) {
+            ++ret;
+            if (node->left and !isEqual(*(node->data), l)) ret += findRange(node->left, l, r);
+            if (node->right and !isEqual(*(node->data), r)) ret += findRange(node->right, l, r);
+        }
+        else {
+            if (Compare()(*(node->data), l)) {
+                if (node->right) ret += findRange(node->right, l, r);
+            }
+            else {
+                if (node->left) ret += findRange(node->left, l, r);
+            }
+        }
+        return ret;
     }
 };
 template<class T, class Compare = std::less<T>>
