@@ -92,9 +92,9 @@ public:
         while (node->right) node = node->right;
         return node;
     }
-    void checkFather(AVLNode* node){
-        if(node->father){
-            if(node == node->father->left) node->father->left = node;
+    void checkFather(AVLNode* node) {
+        if (node->father) {
+            if (node == node->father->left) node->father->left = node;
             else node->father->right = node;
         }
     }
@@ -138,7 +138,7 @@ public:
         if (isEqual(*((*node)->data), data)) return std::pair<AVLNode*, bool>(*node, false);
         else if (Compare()(data, *((*node)->data))) {//insert in left subtree
             auto ret = insert(&((*node)->left), data);
-            if((*node)->left) (*node)->left->father = *node;
+            if ((*node)->left) (*node)->left->father = *node;
             if (!ret.second) return std::pair<AVLNode*, bool>(ret.first, false);
             int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
             if (lheight - rheight == 2) {
@@ -155,7 +155,7 @@ public:
         }
         else {//insert in right subtree
             auto ret = insert(&((*node)->right), data);
-            if((*node)->right) (*node)->right->father = *node;
+            if ((*node)->right) (*node)->right->father = *node;
             if (!ret.second) return std::pair<AVLNode*, bool>(ret.first, false);
             int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
             if (rheight - lheight == 2) {
@@ -177,21 +177,21 @@ public:
         if (isEqual(*((*node)->data), data)) {
             if (nownode->left and nownode->right) {
                 auto swapNode = findMinNode(nownode->right);
-                if(!nownode->father) root = swapNode;
-                if(nownode->father and swapNode->father){
-                    AVLTree *nodeson, *swapson;
-                    if(nownode == nownode->father->left) nodeson = &(nownode->father->left);
+                if (!nownode->father) root = swapNode;
+                if (nownode->father and swapNode->father) {
+                    AVLTree* nodeson, * swapson;
+                    if (nownode == nownode->father->left) nodeson = &(nownode->father->left);
                     else nodeson = &(nownode->father->right);
-                    if(swapNode == swapNode->father->left) swapson = &(swapNode->father->left);
+                    if (swapNode == swapNode->father->left) swapson = &(swapNode->father->left);
                     else swapson = &(swapNode->father->right);
                     std::swap(*nodeson, *swapson);
                 }
-                else if(nownode->father){
-                    if(nownode == nownode->father->left) nownode->father->left = swapNode;
+                else if (nownode->father) {
+                    if (nownode == nownode->father->left) nownode->father->left = swapNode;
                     else nownode->father->right = swapNode;
                 }
-                else{
-                    if(swapNode == swapNode->father->left) swapNode->father->left = nownode;
+                else {
+                    if (swapNode == swapNode->father->left) swapNode->father->left = nownode;
                     else swapNode->father->right = nownode;
                 }
                 std::swap(nownode->height, swapNode->height);
@@ -199,11 +199,11 @@ public:
                 std::swap(nownode->left, swapNode->left);
                 std::swap(nownode->right, swapNode->right);
                 std::swap(nownode->father, swapNode->father);
-                if((*node)->left) (*node)->left->father = (*node);
-                if((*node)->right) (*node)->right->father = (*node);
+                if ((*node)->left) (*node)->left->father = (*node);
+                if ((*node)->right) (*node)->right->father = (*node);
                 *node = swapNode;
-                if((*node)->left) (*node)->left->father = (*node);
-                if((*node)->right) (*node)->right->father = (*node);
+                if ((*node)->left) (*node)->left->father = (*node);
+                if ((*node)->right) (*node)->right->father = (*node);
                 erase(&(swapNode->right), *(nownode->data));
                 int lheight = getHeight((*node)->left), rheight = getHeight((*node)->right);
                 if (lheight - rheight == 2) {
@@ -288,12 +288,12 @@ public:
     AVLNode* findLowerBound(AVLNode* node, const T& key) {//key <= data
         bool isValid = false;
         AVLNode* foundNode = nullptr;
-        if(!Compare()(*(node->data), key)) isValid = true;
-        if(node->left and Compare()(key, *(node->data))) foundNode = findLowerBound(node->left, key);
-        else if(node->right and !isValid) foundNode = findLowerBound(node->right, key);
-        if(isValid){
-            if(!foundNode) return node;
-            else if(Compare()(*(foundNode->data), *(node->data))) return foundNode;
+        if (!Compare()(*(node->data), key)) isValid = true;
+        if (node->left and Compare()(key, *(node->data))) foundNode = findLowerBound(node->left, key);
+        else if (node->right and !isValid) foundNode = findLowerBound(node->right, key);
+        if (isValid) {
+            if (!foundNode) return node;
+            else if (Compare()(*(foundNode->data), *(node->data))) return foundNode;
             else return node;
         }
         else return foundNode;
@@ -301,12 +301,12 @@ public:
     AVLNode* findUpperBound(AVLNode* node, const T& key) {//key < data
         bool isValid = false;
         AVLNode* foundNode = nullptr;
-        if(Compare()(key, *(node->data))) isValid = true;
-        if(node->left and Compare()(key, *(node->data))) foundNode = findUpperBound(node->left, key);
-        else if(node->right and !isValid) foundNode = findUpperBound(node->right, key);
-        if(isValid){
-            if(!foundNode) return node;
-            else if(Compare()(*(foundNode->data), *(node->data))) return foundNode;
+        if (Compare()(key, *(node->data))) isValid = true;
+        if (node->left and Compare()(key, *(node->data))) foundNode = findUpperBound(node->left, key);
+        else if (node->right and !isValid) foundNode = findUpperBound(node->right, key);
+        if (isValid) {
+            if (!foundNode) return node;
+            else if (Compare()(*(foundNode->data), *(node->data))) return foundNode;
             else return node;
         }
         else return foundNode;
@@ -323,10 +323,10 @@ public:
         }
         else {
             if (Compare()(*(node->data), l)) {
-                if(node->right) ret += findRange(node->right, l, r);
+                if (node->right) ret += findRange(node->right, l, r);
             }
             else {
-                if(node->left) ret += findRange(node->left, l, r);
+                if (node->left) ret += findRange(node->left, l, r);
             }
         }
         return ret;
@@ -340,11 +340,11 @@ public:
     AVL<T, Compare>* table = nullptr;
 private:
     inline void fixBeginEnd() {
-        if(!size()){
+        if (!size()) {
             beginIt.node = nullptr;
             endIt.node = nullptr;
         }
-        else{
+        else {
             beginIt = iterator(table->findMinNode(table->root), this);
             endIt = iterator(table->findMaxNode(table->root), this);
         }
@@ -368,11 +368,11 @@ public:
             cont = nullptr;
         }
         iterator(typename AVL<T, Compare>::AVLNode* node, const ESet<T, Compare>* cont) : node(node), cont(cont) {}
-        iterator(const iterator& other){
+        iterator(const iterator& other) {
             node = other.node, cont = other.cont;
         }
-        iterator& operator=(const iterator& other){
-            if(this == &other) return (*this);
+        iterator& operator=(const iterator& other) {
+            if (this == &other) return (*this);
             node = other.node, cont = other.cont;
             return (*this);
         }
@@ -396,7 +396,7 @@ public:
         }
         //it++
         iterator operator++(int) {
-            if(!node) return (*this);
+            if (!node) return (*this);
             auto ret = (*this);
             if ((*this) == cont->endIt) {
                 node = nullptr;
@@ -427,7 +427,7 @@ public:
         }
         //++it
         iterator& operator++() {
-            if(!node) return (*this);
+            if (!node) return (*this);
             if ((*this) == cont->endIt) {
                 node = nullptr;
                 return (*this);
@@ -457,7 +457,7 @@ public:
         }
         //it--
         iterator operator--(int) {
-            if(node == cont->beginIt.node or !cont->size()) return (*this);
+            if (node == cont->beginIt.node or !cont->size()) return (*this);
             auto ret = (*this);
             if (node == nullptr) {
                 (*this) = cont->endIt;
@@ -488,7 +488,7 @@ public:
         }
         //--it
         iterator& operator--() {
-            if(node == cont->beginIt.node or !cont->size()){
+            if (node == cont->beginIt.node or !cont->size()) {
                 return (*this);
             }
             if (node == nullptr) {
@@ -536,7 +536,7 @@ public:
         return ret;
     }
     iterator find(const T& key) const {
-        if(!table) return end();
+        if (!table) return end();
         auto ret = table->find(table->root, key);
         if (ret) return iterator(ret, this);
         else return end();
@@ -603,7 +603,7 @@ public:
         fixBeginEnd();
     }
     ESet& operator=(ESet&& other) noexcept {
-        if(&other == this) return (*this);
+        if (&other == this) return (*this);
         delete table;
         table = other.table;
         other.table = nullptr;
@@ -613,29 +613,29 @@ public:
 
     size_t range(const T& l, const T& r) const {
         if (Compare()(r, l)) return 0;
-        if(size()) return table->findRange(table->root, l, r);
+        if (size()) return table->findRange(table->root, l, r);
         else return 0;
     }
     size_t size() const noexcept {
         return table->getSize(table->root);
     }
     iterator lower_bound(const T& key) const {
-        if(size()) return iterator(table->findLowerBound(table->root, key), this);
+        if (size()) return iterator(table->findLowerBound(table->root, key), this);
         else return end();
     }
     iterator upper_bound(const T& key) const {
-        if(size()) return iterator(table->findUpperBound(table->root, key), this);
+        if (size()) return iterator(table->findUpperBound(table->root, key), this);
         else return end();
     }
     iterator begin() const noexcept {
-        if(size()) return beginIt;
+        if (size()) return beginIt;
         else return end();
     }
     iterator end() const noexcept {
         return iterator(nullptr, this);
     }
     void traverse() {
-        if(!table) std::cout<<"Tree is empty!"<<std::endl;
+        if (!table) std::cout << "Tree is empty!" << std::endl;
         else table->traverse(table->root);
     }
 };
