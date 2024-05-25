@@ -18,7 +18,7 @@ int main() {
 //        if(cnt==213){
 //            printf("!!!");
 //        }
-        std::cin.get();
+        // std::cin.get();
         switch (op) {
             case 0: {
                 scanf("%lld%lld", &a, &b);
@@ -28,12 +28,16 @@ int main() {
                     // std::cout<<"now, data="<<*it<<std::endl;
                     valid = 1;
                 }
+            // s->traverse();
                 break;
             }
             case 1:
                 scanf("%lld%lld", &a, &b);
+                // if(b == 1922) 
+                    // s->traverse();
                 if (valid && *it == b)valid = 0;
                 s[a].erase(b);
+                // s->traverse();
                 break;
             case 2:
                 scanf("%lld", &a);

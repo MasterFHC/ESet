@@ -28,7 +28,7 @@ public:
             :height(height), size(size), data(data), father(father), left(left), right(right) {}
         Node(const Node& other) {
             height = other.height;
-            size = other.height;
+            size = other.size;
             data = new T(*(other.data));
             father = nullptr;
             left = nullptr;

@@ -33,8 +33,6 @@ int main() {
             }
             case 1:
                 scanf("%lld%lld", &a, &b);
-                if(a == 1 and b == 1246) 
-                    std::cout<<"ab="<<a<<' '<<b<<std::endl;
                 if (valid && *it == b)valid = 0;
                 s[a].erase(b);
                 break;

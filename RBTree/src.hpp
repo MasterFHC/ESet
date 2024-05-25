@@ -2,6 +2,7 @@
 #define SJTU_RBTree
 #include <cstddef>
 #include <iostream>
+#include <queue>
 
 template<class T, class Compare = std::less<T>>
 class RBTree {
@@ -24,10 +25,26 @@ public:
         }
         RBNode(int size, bool color, T* data, struct RBNode* father, struct RBNode* left, struct RBNode* right)
             :size(size), color(color), data(data), father(father), left(left), right(right) {}
+        RBNode(const RBNode& other) {
+            size = other.size;
+            color = other.color;
+            data = new T(*(other.data));
+            father = nullptr;
+            left = nullptr;
+            right = nullptr;
+        }
         ~RBNode() {
             father = left = right = nullptr;
             delete data;
             data = nullptr;
+        }
+        RBNode& operator=(const RBNode& other) {
+            if (&other == this) return (*this);
+            size = other.size;
+            color = other.color;
+            data = new T(*(other.data));
+            left = right = nullptr;
+            return (*this);
         }
     };
     RBNode* root = nullptr;   //The root node
@@ -96,10 +113,10 @@ public:
         return node == node->father->right;
     }
 
-    RBNode* find(RBNode* node, const int& key, int op) {
+    RBNode* find(RBNode* node, const T& key, int op) {
         if (!node) return nullptr;
         hot = node;
-        if (*(node->data) == key) return node;
+        if (isEqual(*(node->data), key)) return node;
         if (Compare()(key, *(node->data))) {
             if (node->left){
                 auto ret = find(node->left, key, op);
@@ -133,7 +150,7 @@ public:
         }
         RBNode* node = find(root, key, 1);
         if(node) return std::pair<RBNode*, bool>(node, false);
-        node = new RBNode(1, true, new int(key), hot, nullptr, nullptr);
+        node = new RBNode(1, true, new T(key), hot, nullptr, nullptr);
         if(!Compare()(key, *(hot->data))) hot->right = node;
         else hot->left = node;
         solveRed(node);
@@ -239,38 +256,54 @@ public:
             --(node->size);
             if(!(node->father)) root = rep;
             if(node->father and rep->father){
-                RBNode** nodeson, repson;
+                RBNode **nodeson, **repson;
                 if(isLeft(node)) nodeson = &(node->father->left);
                 else nodeson = &(node->father->right);
-                if(ifLeft(rep)) repson = &(rep->father->left);
+                if(isLeft(rep)) repson = &(rep->father->left);
                 else repson = &(rep->father->right);
-                std::swap(*nodeson, *repson);
+                if(rep->father != node) 
+                    std::swap(*nodeson, *repson);
+                else 
+                    *nodeson = rep;
             }
             else if(node->father){
                 if(isLeft(node)) node->father->left = rep;
                 else node->father->right = rep;
             }
             else{
-                if(isLeft(rep)) rep->father->left = node;
-                else rep->father->right = node;
+                if(rep->father != node){
+                    if(isLeft(rep)) rep->father->left = node;
+                    else rep->father->right = node;
+                }
             }
             std::swap(node->size, rep->size);
             std::swap(node->color, rep->color);
-            std::swap(node->left, rep->left);
-            std::swap(node->right, rep->right);
-            std::swap(node->father, rep->father);
+            if(rep->father == node and isLeft(rep)){
+                node->left = rep->left;
+                rep->left = node;
+            }
+            else std::swap(node->left, rep->left);
+            if(rep->father == node and isRight(rep)){
+                node->right= rep->right;
+                rep->right = node;
+            } 
+            else std::swap(node->right, rep->right);
+            if(rep->father == node){
+                rep->father = node->father;
+                node->father = rep;
+            }
+            else std::swap(node->father, rep->father);
             if(node->left) node->left->father = node;
             if(node->right) node->right->father = node;
-            node = rep;
-            if(node->left) node->left->father = node;
-            if(node->right) node->right->father = node;
+            if(rep->left) rep->left->father = rep;
+            if(rep->right) rep->right->father = rep;
         }
         if(!(node->color)){//double black possibilities!
             --(node->size);
             solveBlack(node);
         }
         if(node == root){
-            node = nullptr;
+            root = nullptr;
             delete node;
             return 1;
         }
@@ -314,6 +347,7 @@ public:
                     balance(bro->left, fa, bro, node, bro->left->left, bro->left->right, bro->right);
                 }
                 else{//bro is left, LL
+                    bro->left->color = false;
                     if(fa->father){
                         if(isLeft(fa)) fa->father->left = bro;
                         else fa->father->right = bro;
@@ -329,11 +363,35 @@ public:
                 bool faColor = fa->color;
                 fa->color = false;
                 if(fa->left == node){//bro is right, RR
-
+                    bro->right->color = false;
+                    if(fa->father){
+                        if(isLeft(fa)) fa->father->left = bro;
+                        else fa->father->right = bro;
+                    }
+                    bro->father = fa->father;
+                    if(root == fa) root = bro;
+                    balance(bro, fa, bro->right, node, bro->left, bro->right->left, bro->right->right);
                 }
                 else{//bro is left, LR
-                    
+                    if(fa->father){
+                        if(isLeft(fa)) fa->father->left = bro->right;
+                        else fa->father->right = bro->right;
+                    }
+                    bro->right->father = fa->father;
+                    if(root == fa) root = bro->right;
+                    balance(bro->right, bro, fa, bro->left, bro->right->left, bro->right->right, node);
                 }
+                fa->father->color = faColor;
+                return;
+            }
+            if(fa->color){
+                fa->color = false;
+                bro->color = true;
+                return;
+            }
+            else{
+                bro->color = true;
+                node = fa;
             }
         }
     }
@@ -341,6 +399,9 @@ public:
     **function for checking correctness and utilities
     */
     void traverse(RBNode* node) {
+        if(node != root and !isLeft(node) and !isRight(node)){
+            std::cout<<"fuck!!!"<<std::endl;
+        }
         if (!node) {
             std::cout << "TREE IS EMPTY!" << std::endl;
             return;
@@ -596,13 +657,13 @@ public:
         return std::pair<iterator, bool>(iterator(ret.first, this), ret.second);
     }
     size_t erase(const T& key) {
-        auto ret = table->erase(&(table->root), key);
+        auto ret = table->erase(key);
         if (size()) fixBeginEnd();
         return ret;
     }
     iterator find(const T& key) const {
         if (!table) return end();
-        auto ret = table->find(table->root, key);
+        auto ret = table->find(table->root, key, 0);
         if (ret) return iterator(ret, this);
         else return end();
     }
