@@ -12,32 +12,27 @@ int main() {
 //    start = clock();
     ESet<long long> s[25];
     ESet<long long>::iterator it;
-    int op, lst=0, valid = 0,cnt=1;
+    int op, lst=0, it_a=-1, valid = 0, cnt=1;
     while (scanf("%d", &op) != EOF) {
         long long a, b, c;
 //        if(cnt==213){
 //            printf("!!!");
 //        }
-        // std::cin.get();
         switch (op) {
             case 0: {
                 scanf("%lld%lld", &a, &b);
                 auto p=s[a].emplace(b);
                 if(p.second) {
+                	it_a = a;
                     it = p.first;
-                    // std::cout<<"now, data="<<*it<<std::endl;
                     valid = 1;
                 }
-            // s->traverse();
                 break;
             }
             case 1:
                 scanf("%lld%lld", &a, &b);
-                // if(b == 1922) 
-                    // s->traverse();
-                if (valid && *it == b)valid = 0;
+                if (valid && it_a==a && *it == b)valid = 0;
                 s[a].erase(b);
-                // s->traverse();
                 break;
             case 2:
                 scanf("%lld", &a);
@@ -48,6 +43,7 @@ int main() {
                 auto it2 = s[a].find(b);
                 if (it2 != s[a].end()) {
                     printf("true\n");
+                    it_a = a;
                     it = it2;
                     valid = 1;
                 } else
