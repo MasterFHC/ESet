@@ -25,89 +25,58 @@ inline void write(ll num) {
 }
 
 const int N = (int)3e6;
-struct Node {
-    int id;
-    int left, right;
-    int size, pri;
-    ll data;
-    bool isCopy = false;
-    Node() {
-        cout<<"id="<<id<<" created by default"<<endl;
-    }
-    ~Node(){
-        if(!isCopy) cout<<"id="<<id<<" is freed! fuck!"<<endl;
-        else cout<<"id="<<id<<" is freed! THIS IS COPY, it's fine !! "<<endl;
-    }
-    Node(int id, int left, int right, int size, int pri, ll data) : id(id), left(left), right(right), size(size), pri(pri), data(data) {
-        cout<<"id="<<id<<" created by ()()()()"<<endl;
-    }
-    Node& operator=(const Node& rhs) {
-        if (this == &rhs) return (*this);
-        id = rhs.id;
-        left = rhs.left;
-        right = rhs.right;
-        size = rhs.size;
-        pri = rhs.pri;
-        data = rhs.data;
-        isCopy = true;
-        return *this;
-    }
-};
-// vector<Node> tree(1, Node(0, 0, 0, 0, 0));
-vector<Node> tree;
+vector<int> l, r, siz, pri;
+vector<ll> dat;
 int cnt = 0;    //number of nodes in all set
 inline void update(int node) {
-    tree[node].size = 1;
-    if (tree[node].left) tree[node].size += tree[tree[node].left].size;
-    if (tree[node].right) tree[node].size += tree[tree[node].right].size;
+    siz[node] = 1;
+    if (l[node]) siz[node] += siz[l[node]];
+    if (r[node]) siz[node] += siz[r[node]];
 }
 int newcnt = 0;
 inline int newNode(ll key = 0) {
-    // cout<<"newcnt = "<<++newcnt<<endl;
-    // cout<<"treesize = "<< tree.size()<<endl;
-    // tree.push_back(Node(0, 0, 1, rand(), key));
-    tree.emplace_back(++cnt,0,0,0,0,0);
-    // ++cnt;
-    // tree[cnt].id = cnt;
-    tree[cnt].data = key;
-    // tree[cnt].left = tree[cnt].right = 0;
-    tree[cnt].size = 1;
-    tree[cnt].pri = rand();
-    // cout<<"-------Node List------"<<endl;
-    // for(int i=0;i<=cnt;i++){
-    //     cout<<"("<<tree[i].id<<","<<tree[i].left<<","<<tree[i].right<<","<<tree[i].data<<")"<<endl;
-    // }
-    // cout<<"----------------------"<<endl;
+    l.emplace_back(0);
+    r.emplace_back(0);
+    siz.emplace_back(1);
+    pri.emplace_back(rand());
+    dat.emplace_back(key);
+    ++cnt;
     return cnt;
+}
+inline void copyTo(int x, int y){
+    l[y] = l[x];
+    r[y] = r[x];
+    siz[y] = siz[x];
+    pri[y] = pri[x];
+    dat[y] = dat[x];
 }
 inline int findMin(int node) {
     while (node) {
-        if (tree[node].left) node = tree[node].left;
+        if (l[node]) node = l[node];
         else break;
     }
-    return tree[node].data;
+    return dat[node];
 }
 inline int findMax(int node) {
     while (node) {
-        // cout<<node<<' '<<tree[node].left<<' '<<tree[node].right<<endl;
-        if (tree[node].right) node = tree[node].right;
+        if (r[node]) node = r[node];
         else break;
     }
-    return tree[node].data;
+    return dat[node];
 }
 inline int merge(int x, int y) {
     if (!x or !y) return x + y;
-    if (tree[x].pri < tree[y].pri) {
-        int rt = newNode();
-        tree[rt] = tree[x];
-        tree[rt].right = merge(tree[rt].right, y);
+    if (pri[x] < pri[y]) {
+        int rt = newNode(0);
+        copyTo(x, rt);
+        r[rt] = merge(r[rt], y);
         update(rt);
         return rt;
     }
     else {
-        int rt = newNode();
-        tree[rt] = tree[y];
-        tree[rt].left = merge(x, tree[rt].left);
+        int rt = newNode(0);
+        copyTo(y, rt);
+        l[rt] = merge(x, l[rt]);
         update(rt);
         return rt;
     }
@@ -115,37 +84,42 @@ inline int merge(int x, int y) {
 inline void split(int rt, ll key, int& x, int& y) {
     if (!rt) x = y = 0;
     else {
-        if (tree[rt].data <= key) {
-            x = newNode();
-            tree[x] = tree[rt];
-            split(tree[x].right, key, tree[x].right, y);
+        if (dat[rt] <= key) {
+            int temp;
+            x = newNode(0);
+            copyTo(rt, x);
+            temp = r[x];
+            split(r[x], key, temp, y);
+            r[x] = temp;
             update(x);
         }
         else {
-            y = newNode();
-            // cout<<"newed y = "<<y<<endl;
-            tree[y] = tree[rt];
-            split(tree[y].left, key, x, tree[y].left);
+            int temp;
+            y = newNode(0);
+            copyTo(rt, y);
+            temp = l[y];
+            split(l[y], key, x, temp);
+            l[y] = temp;
             update(y);
         }
     }
 }
 inline bool find(int node, int key) {
     while (node) {
-        if (key == tree[node].data) return true;
-        if (key < tree[node].data) node = tree[node].left;
-        else node = tree[node].right;
+        if (key == dat[node]) return true;
+        if (key < dat[node]) node = l[node];
+        else node = r[node];
     }
     return false;
 }
 inline int findkth(int node, int key) {
     while (true) {
-        if (key <= tree[tree[node].left].size)
-            node = tree[node].left;
+        if (key <= siz[l[node]])
+            node = l[node];
         else {
-            if (tree[node].left) key -= tree[tree[node].left].size;
+            if (l[node]) key -= siz[l[node]];
             if (!(--key)) return node;
-            node = tree[node].right;
+            node = r[node];
         }
     }
 }
@@ -155,29 +129,32 @@ void traverse(int node) {
         std::cout << "TREE IS EMPTY!" << std::endl;
         return;
     }
-    std::cout << tree[node].id<<' '<<tree[node].data << ' ' << tree[node].left << ' ' << tree[node].right << ' ' << tree[node].pri << endl;
-    if (tree[node].left) traverse(tree[node].left);
-    if (tree[node].right) traverse(tree[node].right);
+    std::cout << node <<' '<<dat[node] << ' ' << l[node] << ' ' << r[node] << ' ' << siz[node] << endl;
+    if (l[node]) traverse(l[node]);
+    if (r[node]) traverse(r[node]);
 }
 
-vector<int> root(N/100, 0);   //root[id] stores the current version number of the id-th set
+ll root[30001];   //root[id] stores the current version number of the id-th set
 
 int main() {
-    // freopen("1.in", "r", stdin);
-    // freopen("1.out", "w", stdout);
+    freopen("1.in", "r", stdin);
+    freopen("1.out", "w", stdout);
     int op, lst = 0, it_a = -1, it = -1, valid = 0;
-    tree.emplace_back(114, 0, 0, 0, 0, 0);
+    newNode(0);
+    siz[0] = 0;
+    l[0] = 0;
+    r[0] = 0;
+    dat[0] = 0;
+    pri[0] = 0;
+    cnt = 0;
     while (scanf("%d", &op) != EOF) {
         long long a, b, c;
         int xx = 0, yy = 0, zz = 0;
         if (op == 0) {
-            // a = read(), b = read();
-            cin>>a>>b;
+            a = read(), b = read();
             if (!find(root[a], b)) {
                 split(root[a], b, xx, yy);
-                // cout<<"split done"<<endl;
                 auto ret = merge(merge(xx, newNode(b)), yy);
-                // cout<<"merged = "<<ret<<endl;
                 root[a] = ret;
                 it_a = a;
                 it = b;
@@ -185,29 +162,22 @@ int main() {
             }
         }
         else if (op == 1) {
-            // a = read(), b = read();
-            cin>>a>>b;
+            a = read(), b = read();
             if (valid and it_a == a and it == b) valid = 0;
             if (find(root[a], b)) {
                 split(root[a], b, xx, zz);
                 split(xx, b - 1, xx, yy);
-                // cout<<"yy before merge= "<< yy << endl;
-                // cout<<"left, right = "<<tree[yy].left<<' '<<tree[yy].right<<endl;
-                yy = merge(tree[yy].left, tree[yy].right);
-                // cout<<"yy after merge= "<< yy << endl;
+                yy = merge(l[yy], r[yy]);
                 auto ret = merge(merge(xx, yy), zz);
-                // cout<<"merged = "<<ret<<endl;
                 root[a] = ret;
             }
         }
         else if (op == 2) {
-            // a = read();
-            cin>>a;
+            a = read();
             root[++lst] = root[a];
         }
         else if (op == 3) {
-            // a = read(), b = read();
-            cin>>a>>b;
+            a = read(), b = read();
             if (find(root[a], b)) {
                 puts("true");
                 it_a = a;
@@ -219,8 +189,7 @@ int main() {
             }
         }
         else if (op == 4) {
-            // a = read(), b = read(), c = read();
-            cin>>a>>b>>c;
+            a = read(), b = read(), c = read();
             if (c < b) {
                 write(0);
                 putchar('\n');
@@ -228,21 +197,19 @@ int main() {
             else {
                 split(root[a], c, xx, yy);
                 split(xx, b - 1, xx, zz);
-                write(tree[zz].size);
+                write(siz[zz]);
                 putchar('\n');
                 auto ret = merge(merge(xx, zz), yy);
-                // cout<<"merged = "<<ret<<endl;
                 root[a] = ret;
             }
         }
         else if (op == 5) {
             if (valid) {
-                // cout<<"it, ita="<<it<<' '<<it_a<<endl;
                 if (it == findMin(root[it_a])) valid = 0;
             }
             if (valid) {
                 split(root[it_a], it - 1, xx, yy);
-                it = tree[findkth(xx, tree[xx].size)].data;
+                it = dat[findkth(xx, siz[xx])];
                 write(it);
                 putchar('\n');
                 root[it_a] = merge(xx, yy);
@@ -253,14 +220,12 @@ int main() {
         }
         else if (op == 6) {
             if (valid) {
-                // cout<<"root[it_a] = "<<it_a<<' '<<root[it_a]<<endl;
                 if (it == findMax(root[it_a])) {
-                    // cout<<"it="<<it<<endl;
                     valid = 0;
                 }
                 else {
                     split(root[it_a], it, xx, yy);
-                    it = tree[findkth(yy, 1)].data;
+                    it = dat[findkth(yy, 1)];
                     write(it);
                     putchar('\n');
                     root[it_a] = merge(xx, yy);
@@ -269,11 +234,6 @@ int main() {
             if (!valid) {
                 puts("-1");
             }
-        }
-        else{
-            a = read();
-            traverse(root[a]);
-            cout<<"cnt="<<cnt<<endl;
         }
     }
     return 0;
